@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { analyzeBankStatement } from "~/server/services/bankStatementService";
+import { analyzeBankStatement } from "../../services/bankStatementService";
 import type { BankStatementData } from "~/types/bank-statement";
 
 export const bankStatementRouter = createTRPCRouter({
