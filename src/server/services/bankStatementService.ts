@@ -1,83 +1,78 @@
 import PDFParse from "pdf-parse";
-import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import type { BankStatementData, Transaction } from "~/types/bank-statement";
+import * as fs from "fs";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const anthropic = new Anthropic({
+  apiKey: process.env.OPENAI_API_KEY, // Using OPENAI_API_KEY for Anthropic
 });
 
 export async function analyzeBankStatement(
   pdfBuffer: Buffer,
 ): Promise<BankStatementData> {
-  // Step 1: Extract text from PDF
-  const pdfData = await PDFParse(pdfBuffer);
-  const extractedText = pdfData.text;
+  if (!pdfBuffer || pdfBuffer.length === 0) {
+    throw new Error("Invalid PDF buffer: PDF buffer is empty or null");
+  }
 
-  // Step 2: Use OpenAI to analyze the text
-  const analysisPrompt = `
-You are a bank statement analyzer. Analyze the following bank statement text and extract the required information.
+  let extractedText: string;
+  try {
+    const pdfData = await PDFParse(pdfBuffer);
+    extractedText = pdfData.text;
+  } catch (error) {
+    console.error("Error extracting text from PDF:", error);
+    throw new Error("Failed to extract text from PDF.");
+  }
 
-Please respond with a JSON object containing:
-1. accountHolderName: string (the name of the account holder)
-2. accountHolderAddress: string (the address of the account holder)
-3. documentDate: string | null (the statement date, format as YYYY-MM-DD if found)
-4. startingBalance: number (opening balance)
-5. endingBalance: number (closing balance)
-6. transactions: array of objects with:
-   - id: string (generate a unique ID)
-   - date: string (YYYY-MM-DD format)
-   - description: string
-   - amount: number (positive for credits, negative for debits)
-   - type: "credit" | "debit"
-   - balance: number (running balance if available)
+  const prompt = `
+You are a precise bank statement analyzer that responds only with valid JSON.
+
+Analyze the following bank statement text and extract the required information:
+
+Return:
+{
+  "accountHolderName": string,
+  "accountHolderAddress": string,
+  "documentDate": string | null,
+  "startingBalance": number,
+  "endingBalance": number,
+  "transactions": [{
+    "id": string,
+    "date": string,
+    "description": string,
+    "amount": number,
+    "type": "credit" | "debit",
+    "balance": number | null
+  }]
+}
 
 Bank statement text:
 ${extractedText}
-
-Important notes:
-- Extract ALL transactions visible in the statement
-- Ensure amounts are correctly signed (negative for debits/withdrawals, positive for credits/deposits)
-- If balance information is not clear, set balance to null for individual transactions
-- Be precise with numbers and dates
-- If information is not found, use null for strings and 0 for numbers
-
-Respond only with valid JSON, no additional text.
 `;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+    const completion = await anthropic.messages.create({
+      model: "claude-3-opus-20240229",
+      max_tokens: 4000,
       messages: [
         {
-          role: "system",
-          content:
-            "You are a precise bank statement analyzer that returns only valid JSON.",
-        },
-        {
           role: "user",
-          content: analysisPrompt,
+          content: prompt,
         },
       ],
-      temperature: 0.1,
-      max_tokens: 4000,
     });
 
-    const responseText = completion.choices[0]?.message?.content;
-    if (!responseText) {
-      throw new Error("No response from OpenAI");
+    // Parse the response correctly by checking block type
+    const textBlock = completion.content.find(
+      (block) => block.type === "text",
+    ) as { type: "text"; text: string } | undefined;
+
+    if (!textBlock) {
+      throw new Error("No valid text block found in Claude response");
     }
 
-    // Parse the JSON response
-    const parsedData = JSON.parse(responseText) as {
-      accountHolderName: string;
-      accountHolderAddress: string;
-      documentDate: string | null;
-      startingBalance: number;
-      endingBalance: number;
-      transactions: Transaction[];
-    };
+    const responseText = textBlock.text;
+    const parsedData = JSON.parse(responseText);
 
-    // Step 3: Validate and reconcile the data
     const calculatedBalance = calculateBalanceFromTransactions(
       parsedData.startingBalance,
       parsedData.transactions,
@@ -86,7 +81,7 @@ Respond only with valid JSON, no additional text.
     const balanceDifference = Math.abs(
       calculatedBalance - parsedData.endingBalance,
     );
-    const isReconciled = balanceDifference < 0.01; // Allow for small rounding differences
+    const isReconciled = balanceDifference < 0.01;
 
     const result: BankStatementData = {
       ...parsedData,
@@ -99,7 +94,9 @@ Respond only with valid JSON, no additional text.
   } catch (error) {
     console.error("Error analyzing bank statement:", error);
     throw new Error(
-      `Failed to analyze bank statement: ${error instanceof Error ? error.message : "Unknown error"}`,
+      `Failed to analyze bank statement: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
     );
   }
 }
@@ -108,12 +105,12 @@ function calculateBalanceFromTransactions(
   startingBalance: number,
   transactions: Transaction[],
 ): number {
-  return transactions.reduce((balance, transaction) => {
-    return balance + transaction.amount;
-  }, startingBalance);
+  return transactions.reduce(
+    (balance, txn) => balance + txn.amount,
+    startingBalance,
+  );
 }
 
-// Utility function to generate unique IDs for transactions
 export function generateTransactionId(): string {
   return `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 }

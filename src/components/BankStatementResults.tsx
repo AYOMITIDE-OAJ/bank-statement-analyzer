@@ -20,6 +20,25 @@ export default function BankStatementResults({
   data,
   onReset,
 }: BankStatementResultsProps) {
+  if (
+    !data ||
+    !data.accountHolderName ||
+    !data.accountHolderAddress ||
+    data.documentDate === undefined ||
+    data.startingBalance === undefined ||
+    data.endingBalance === undefined ||
+    !data.transactions ||
+    data.calculatedBalance === undefined ||
+    data.isReconciled === undefined ||
+    data.balanceDifference === undefined
+  ) {
+    return (
+      <div className="mx-auto w-full max-w-6xl p-6">
+        <p className="text-red-600">Invalid data to display.</p>
+      </div>
+    );
+  }
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
