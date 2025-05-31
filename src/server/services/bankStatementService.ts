@@ -22,33 +22,42 @@ export async function analyzeBankStatement(
     throw new Error("Failed to extract text from PDF.");
   }
 
-  const jsonExample = `{
-  "accountHolderName": "example",
-  "accountHolderAddress": "example",
-  "documentDate": null,
+  const prompt = `
+You are a financial analysis assistant. Analyze the following bank statement text and extract:
+
+- accountHolderName
+- accountHolderAddress
+- documentDate (the statement date)
+- startingBalance (number)
+- endingBalance (number)
+- A list of transactions with:
+  - date (format: YYYY-MM-DD)
+  - description
+  - amount (positive number)
+  - type ("credit" or "debit")
+
+Return a valid JSON object in the following format:
+
+{
+  "accountHolderName": "...",
+  "accountHolderAddress": "...",
+  "documentDate": "...",
   "startingBalance": 0,
   "endingBalance": 0,
-  "transactions": [{
-    "id": "example",
-    "date": "example",
-    "description": "example",
-    "amount": 0,
-    "type": "credit",
-    "balance": null
-  }]
-}`;
-
-  const prompt = `
-You are a precise bank statement analyzer that responds only with valid JSON. If you cannot extract the information, return a valid JSON object with empty values.
-
-Analyze the following bank statement text and extract:
-
-Here is an example of the JSON format you should return:
-
-${jsonExample}
+  "transactions": [
+    {
+      "date": "...",
+      "description": "...",
+      "amount": 0,
+      "type": "credit"
+    }
+  ]
+}
 
 Bank statement text:
+"""
 ${extractedText}
+"""
 `;
 
   try {
@@ -63,32 +72,24 @@ ${extractedText}
       ],
     });
 
-    const textBlock = completion.content.find(
+    const responseText = completion.content.find(
       (block) => block.type === "text",
-    ) as { type: "text"; text: string } | undefined;
+    ) as { type: "text"; text: string };
 
-    if (!textBlock) {
-      throw new Error("Claude returned no usable text");
+    const jsonMatch = responseText.text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("Claude response does not contain valid JSON.");
     }
 
     let parsedData: BankStatementData;
     try {
-      parsedData = JSON.parse(textBlock.text);
-    } catch (parseError) {
-      console.error("JSON parse error:", parseError);
-      parsedData = {
-        accountHolderName: "N/A",
-        accountHolderAddress: "N/A",
-        documentDate: null,
-        startingBalance: 0,
-        endingBalance: 0,
-        transactions: [],
-        calculatedBalance: 0,
-        isReconciled: false,
-        balanceDifference: 0,
-      };
+      parsedData = JSON.parse(jsonMatch[0]);
+    } catch (err) {
+      console.error("JSON parsing failed:", err);
+      throw new Error("Failed to parse JSON from Claude output.");
     }
 
+    // Post-processing
     const calculatedBalance = calculateBalanceFromTransactions(
       parsedData.startingBalance,
       parsedData.transactions,
@@ -97,18 +98,17 @@ ${extractedText}
     const balanceDifference = Math.abs(
       calculatedBalance - parsedData.endingBalance,
     );
+    const isReconciled = balanceDifference < 0.01;
 
     return {
       ...parsedData,
       calculatedBalance,
-      isReconciled: balanceDifference < 0.01,
       balanceDifference,
+      isReconciled,
     };
-  } catch (error: any) {
-    console.error("Claude processing error:", error);
-    throw new Error(
-      `Failed to analyze bank statement: ${error.message || "Unknown"}`,
-    );
+  } catch (error) {
+    console.error("Claude error or JSON parse error:", error);
+    throw new Error("Failed to analyze bank statement with Claude.");
   }
 }
 
@@ -116,7 +116,7 @@ function calculateBalanceFromTransactions(
   startingBalance: number,
   transactions: Transaction[],
 ): number {
-  return transactions.reduce((acc, txn) => {
-    return txn.type === "credit" ? acc + txn.amount : acc - txn.amount;
+  return transactions.reduce((balance, txn) => {
+    return txn.type === "credit" ? balance + txn.amount : balance - txn.amount;
   }, startingBalance);
 }

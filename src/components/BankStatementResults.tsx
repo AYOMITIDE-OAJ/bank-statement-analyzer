@@ -245,8 +245,11 @@ export default function BankStatementResults({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {data.transactions.map((transaction) => (
-                <tr key={transaction.id} className="hover:bg-gray-50">
+              {data.transactions.map((transaction, index) => (
+                <tr
+                  key={`${index}-${transaction.description}`}
+                  className="hover:bg-gray-50"
+                >
                   <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
                     {formatDate(transaction.date)}
                   </td>
