@@ -21,7 +21,7 @@ A full-stack TypeScript application that allows analysts to upload PDF bank stat
 - TypeScript
 - Next.js 
 - Tailwind CSS (optional for UI)
-- PDF.js / pdf-parse / OpenAI API (or other LLM)
+- PDF.js / pdf-parse / Anthropic API
 
 ## 🧑‍💻 Setup Instructions
 
