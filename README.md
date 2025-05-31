@@ -14,7 +14,7 @@ A full-stack TypeScript application that allows analysts to upload PDF bank stat
 - Extraction and parsing of key data from PDFs using AI or text heuristics
 - Validates transaction sum against balance difference
 - Minimal and clean UI
-- Built with [Next.js](https://nextjs.org/) / [Vite + Express](https://vitejs.dev/)
+- Built with [Next.js](https://nextjs.org/) 
 
 ## 🛠️ Tech Stack
 
