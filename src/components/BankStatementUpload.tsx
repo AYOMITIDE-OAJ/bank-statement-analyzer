@@ -103,10 +103,10 @@ export default function BankStatementUpload({
 
       {/* File Upload Area */}
       <div
-        className={`rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
+        className={`rounded-lg border-2 border-dashed bg-transparent p-8 text-center transition-colors ${
           dragActive
-            ? "border-blue-400 bg-blue-50"
-            : "border-gray-300 hover:border-gray-400"
+            ? "border-blue-400"
+            : "border-white/20 hover:border-blue-400"
         }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}

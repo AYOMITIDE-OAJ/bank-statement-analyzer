@@ -1,10 +1,9 @@
 import PDFParse from "pdf-parse";
 import Anthropic from "@anthropic-ai/sdk";
 import type { BankStatementData, Transaction } from "~/types/bank-statement";
-import * as fs from "fs";
 
 const anthropic = new Anthropic({
-  apiKey: process.env.OPENAI_API_KEY, // Using OPENAI_API_KEY for Anthropic
+  apiKey: process.env.ANTHROPIC_API_KEY || "",
 });
 
 export async function analyzeBankStatement(
@@ -19,31 +18,34 @@ export async function analyzeBankStatement(
     const pdfData = await PDFParse(pdfBuffer);
     extractedText = pdfData.text;
   } catch (error) {
-    console.error("Error extracting text from PDF:", error);
+    console.error("PDF parse error:", error);
     throw new Error("Failed to extract text from PDF.");
   }
 
-  const prompt = `
-You are a precise bank statement analyzer that responds only with valid JSON.
-
-Analyze the following bank statement text and extract the required information:
-
-Return:
-{
-  "accountHolderName": string,
-  "accountHolderAddress": string,
-  "documentDate": string | null,
-  "startingBalance": number,
-  "endingBalance": number,
+  const jsonExample = `{
+  "accountHolderName": "example",
+  "accountHolderAddress": "example",
+  "documentDate": null,
+  "startingBalance": 0,
+  "endingBalance": 0,
   "transactions": [{
-    "id": string,
-    "date": string,
-    "description": string,
-    "amount": number,
-    "type": "credit" | "debit",
-    "balance": number | null
+    "id": "example",
+    "date": "example",
+    "description": "example",
+    "amount": 0,
+    "type": "credit",
+    "balance": null
   }]
-}
+}`;
+
+  const prompt = `
+You are a precise bank statement analyzer that responds only with valid JSON. If you cannot extract the information, return a valid JSON object with empty values.
+
+Analyze the following bank statement text and extract:
+
+Here is an example of the JSON format you should return:
+
+${jsonExample}
 
 Bank statement text:
 ${extractedText}
@@ -61,17 +63,31 @@ ${extractedText}
       ],
     });
 
-    // Parse the response correctly by checking block type
     const textBlock = completion.content.find(
       (block) => block.type === "text",
     ) as { type: "text"; text: string } | undefined;
 
     if (!textBlock) {
-      throw new Error("No valid text block found in Claude response");
+      throw new Error("Claude returned no usable text");
     }
 
-    const responseText = textBlock.text;
-    const parsedData = JSON.parse(responseText);
+    let parsedData: BankStatementData;
+    try {
+      parsedData = JSON.parse(textBlock.text);
+    } catch (parseError) {
+      console.error("JSON parse error:", parseError);
+      parsedData = {
+        accountHolderName: "N/A",
+        accountHolderAddress: "N/A",
+        documentDate: null,
+        startingBalance: 0,
+        endingBalance: 0,
+        transactions: [],
+        calculatedBalance: 0,
+        isReconciled: false,
+        balanceDifference: 0,
+      };
+    }
 
     const calculatedBalance = calculateBalanceFromTransactions(
       parsedData.startingBalance,
@@ -81,22 +97,17 @@ ${extractedText}
     const balanceDifference = Math.abs(
       calculatedBalance - parsedData.endingBalance,
     );
-    const isReconciled = balanceDifference < 0.01;
 
-    const result: BankStatementData = {
+    return {
       ...parsedData,
       calculatedBalance,
-      isReconciled,
+      isReconciled: balanceDifference < 0.01,
       balanceDifference,
     };
-
-    return result;
-  } catch (error) {
-    console.error("Error analyzing bank statement:", error);
+  } catch (error: any) {
+    console.error("Claude processing error:", error);
     throw new Error(
-      `Failed to analyze bank statement: ${
-        error instanceof Error ? error.message : "Unknown error"
-      }`,
+      `Failed to analyze bank statement: ${error.message || "Unknown"}`,
     );
   }
 }
@@ -105,12 +116,7 @@ function calculateBalanceFromTransactions(
   startingBalance: number,
   transactions: Transaction[],
 ): number {
-  return transactions.reduce(
-    (balance, txn) => balance + txn.amount,
-    startingBalance,
-  );
-}
-
-export function generateTransactionId(): string {
-  return `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return transactions.reduce((acc, txn) => {
+    return txn.type === "credit" ? acc + txn.amount : acc - txn.amount;
+  }, startingBalance);
 }

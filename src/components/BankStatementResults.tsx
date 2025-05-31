@@ -73,7 +73,7 @@ export default function BankStatementResults({
       </div>
 
       {/* Account Information */}
-      <div className="rounded-lg border bg-white p-6 shadow-lg">
+      <div className="rounded-lg border border-white/20 bg-transparent p-6">
         <h3 className="mb-4 text-xl font-semibold text-gray-900">
           Account Information
         </h3>
@@ -102,7 +102,7 @@ export default function BankStatementResults({
       </div>
 
       {/* Balance Summary */}
-      <div className="rounded-lg border bg-white p-6 shadow-lg">
+      <div className="rounded-lg border border-white/20 bg-transparent p-6">
         <h3 className="mb-4 text-xl font-semibold text-gray-900">
           Balance Summary
         </h3>
@@ -173,7 +173,7 @@ export default function BankStatementResults({
       </div>
 
       {/* Transaction Summary */}
-      <div className="rounded-lg border bg-white p-6 shadow-lg">
+      <div className="rounded-lg border border-white/20 bg-transparent p-6">
         <h3 className="mb-4 text-xl font-semibold text-gray-900">
           Transaction Summary
         </h3>
@@ -215,7 +215,7 @@ export default function BankStatementResults({
       </div>
 
       {/* Transactions Table */}
-      <div className="overflow-hidden rounded-lg border bg-white shadow-lg">
+      <div className="overflow-hidden rounded-lg border border-white/20 bg-transparent p-6">
         <div className="border-b p-6">
           <h3 className="text-xl font-semibold text-gray-900">
             Transaction History
@@ -225,26 +225,26 @@ export default function BankStatementResults({
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
                   Description
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">
+                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
                   Type
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
                   Amount
                 </th>
                 {data.transactions.some((t) => t.balance !== undefined) && (
-                  <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">
+                  <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
                     Running Balance
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y divide-gray-200">
               {data.transactions.map((transaction) => (
                 <tr key={transaction.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
@@ -303,7 +303,7 @@ export default function BankStatementResults({
                 clipRule="evenodd"
               />
             </svg>
-            <div>
+            <div className="text-white">
               <h4 className="text-sm font-medium text-yellow-800">
                 Balance Discrepancy Detected
               </h4>
