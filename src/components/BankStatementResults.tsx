@@ -1,5 +1,3 @@
-// src/components/BankStatementResults.tsx
-
 "use client";
 
 import type { BankStatementData } from "../types/bank-statement";
