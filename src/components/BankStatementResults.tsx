@@ -2,13 +2,6 @@
 
 "use client";
 
-import type {
-  Key,
-  ReactElement,
-  JSXElementConstructor,
-  ReactNode,
-  ReactPortal,
-} from "react";
 import type { BankStatementData } from "../types/bank-statement";
 
 interface BankStatementResultsProps {
@@ -33,25 +26,24 @@ export default function BankStatementResults({
     data.balanceDifference === undefined
   ) {
     return (
-      <div className="mx-auto w-full max-w-6xl p-6">
-        <p className="text-red-600">Invalid data to display.</p>
+      <div className="mx-auto w-full max-w-6xl p-6 text-center">
+        <p className="text-red-500">Invalid data to display.</p>
       </div>
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(amount);
-  };
 
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-US", {
         year: "numeric",
-        month: "long",
+        month: "short",
         day: "numeric",
       });
     } catch {
@@ -60,112 +52,74 @@ export default function BankStatementResults({
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-6xl space-y-8 p-6 text-white">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold text-gray-900">Analysis Results</h2>
+        <h2 className="text-3xl font-bold">Analysis Results</h2>
         <button
           onClick={onReset}
-          className="rounded-lg border border-blue-300 px-4 py-2 text-blue-600 transition-colors hover:border-blue-400 hover:text-blue-700"
+          className="rounded-lg border border-cyan-500 px-4 py-2 text-cyan-400 transition hover:bg-cyan-900/30"
         >
-          Analyze Another Statement
+          Analyze Another
         </button>
       </div>
 
-      {/* Account Information */}
-      <div className="rounded-lg border border-white/20 bg-transparent p-6">
-        <h3 className="mb-4 text-xl font-semibold text-gray-900">
+      {/* Account Info */}
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 shadow-md backdrop-blur-sm">
+        <h3 className="mb-4 text-xl font-semibold text-cyan-400">
           Account Information
         </h3>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 text-gray-200 md:grid-cols-2">
           <div>
-            <p className="text-sm font-medium text-gray-500">Account Holder</p>
-            <p className="text-lg text-gray-900">{data.accountHolderName}</p>
+            <p className="text-sm text-gray-400">Holder</p>
+            <p className="text-lg font-medium">{data.accountHolderName}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Address</p>
-            <p className="whitespace-pre-line text-gray-900">
-              {data.accountHolderAddress}
+            <p className="text-sm text-gray-400">Address</p>
+            <p className="whitespace-pre-line">{data.accountHolderAddress}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-400">Statement Date</p>
+            <p className="text-lg font-medium">
+              {data.documentDate ? formatDate(data.documentDate) : "N/A"}
             </p>
           </div>
-          {data.documentDate && (
-            <div>
-              <p className="text-sm font-medium text-gray-500">
-                Statement Date
-              </p>
-              <p className="text-lg text-gray-900">
-                {formatDate(data.documentDate)}
-              </p>
-            </div>
-          )}
         </div>
       </div>
 
       {/* Balance Summary */}
-      <div className="rounded-lg border border-white/20 bg-transparent p-6">
-        <h3 className="mb-4 text-xl font-semibold text-gray-900">
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 shadow-md backdrop-blur-sm">
+        <h3 className="mb-4 text-xl font-semibold text-cyan-400">
           Balance Summary
         </h3>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">
-              Starting Balance
-            </p>
-            <p className="text-2xl font-bold text-gray-900">
+        <div className="grid grid-cols-1 gap-6 text-center md:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="text-sm text-gray-400">Starting Balance</p>
+            <p className="text-2xl font-bold">
               {formatCurrency(data.startingBalance)}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">Ending Balance</p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div>
+            <p className="text-sm text-gray-400">Ending Balance</p>
+            <p className="text-2xl font-bold">
               {formatCurrency(data.endingBalance)}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">
-              Calculated Balance
-            </p>
-            <p className="text-2xl font-bold text-gray-900">
+          <div>
+            <p className="text-sm text-gray-400">Calculated Balance</p>
+            <p className="text-2xl font-bold">
               {formatCurrency(data.calculatedBalance)}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">
-              Reconciliation Status
-            </p>
-            <div className="mt-2 flex items-center justify-center">
+          <div>
+            <p className="text-sm text-gray-400">Reconciliation</p>
+            <div className="mt-2 text-lg font-semibold">
               {data.isReconciled ? (
-                <div className="flex items-center text-green-600">
-                  <svg
-                    className="mr-1 h-5 w-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span className="font-semibold">Reconciled</span>
-                </div>
+                <span className="text-green-400">✅ Reconciled</span>
               ) : (
-                <div className="flex items-center text-red-600">
-                  <svg
-                    className="mr-1 h-5 w-5"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  <span className="font-semibold">
-                    Difference: {formatCurrency(data.balanceDifference)}
-                  </span>
-                </div>
+                <span className="text-red-500">
+                  ❌ Difference: {formatCurrency(data.balanceDifference)}
+                </span>
               )}
             </div>
           </div>
@@ -173,41 +127,32 @@ export default function BankStatementResults({
       </div>
 
       {/* Transaction Summary */}
-      <div className="rounded-lg border border-white/20 bg-transparent p-6">
-        <h3 className="mb-4 text-xl font-semibold text-gray-900">
+      <div className="rounded-xl border border-white/10 bg-white/5 p-6 shadow-md backdrop-blur-sm">
+        <h3 className="mb-4 text-xl font-semibold text-cyan-400">
           Transaction Summary
         </h3>
-        <div className="mb-6 grid gap-6 md:grid-cols-3">
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">
-              Total Transactions
-            </p>
-            <p className="text-2xl font-bold text-gray-900">
-              {data.transactions.length}
-            </p>
+        <div className="grid gap-6 text-center md:grid-cols-3">
+          <div>
+            <p className="text-sm text-gray-400">Total Transactions</p>
+            <p className="text-2xl font-bold">{data.transactions.length}</p>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">Total Credits</p>
-            <p className="text-2xl font-bold text-green-600">
+          <div>
+            <p className="text-sm text-gray-400">Total Credits</p>
+            <p className="text-2xl font-bold text-green-400">
               {formatCurrency(
                 data.transactions
-                  .filter((t: { type: string }) => t.type === "credit")
-                  .reduce((sum: any, t: { amount: any }) => sum + t.amount, 0),
+                  .filter((t) => t.type === "credit")
+                  .reduce((sum, t) => sum + t.amount, 0),
               )}
             </p>
           </div>
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-500">Total Debits</p>
-            <p className="text-2xl font-bold text-red-600">
+          <div>
+            <p className="text-sm text-gray-400">Total Debits</p>
+            <p className="text-2xl font-bold text-red-400">
               {formatCurrency(
-                Math.abs(
-                  data.transactions
-                    .filter((t: { type: string }) => t.type === "debit")
-                    .reduce(
-                      (sum: any, t: { amount: any }) => sum + t.amount,
-                      0,
-                    ),
-                ),
+                data.transactions
+                  .filter((t) => t.type === "debit")
+                  .reduce((sum, t) => sum + t.amount, 0),
               )}
             </p>
           </div>
@@ -215,73 +160,61 @@ export default function BankStatementResults({
       </div>
 
       {/* Transactions Table */}
-      <div className="overflow-hidden rounded-lg border border-white/20 bg-transparent p-6">
-        <div className="border-b p-6">
-          <h3 className="text-xl font-semibold text-gray-900">
+      <div className="rounded-xl border border-white/10 bg-white/5 shadow-md backdrop-blur-sm">
+        <div className="border-b border-white/10 p-6">
+          <h3 className="text-xl font-semibold text-cyan-400">
             Transaction History
           </h3>
         </div>
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-white/10">
+            <thead className="bg-white/5">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-cyan-300 uppercase">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-cyan-300 uppercase">
                   Description
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
+                <th className="px-6 py-3 text-left text-xs font-semibold text-cyan-300 uppercase">
                   Type
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
+                <th className="px-6 py-3 text-right text-xs font-semibold text-cyan-300 uppercase">
                   Amount
                 </th>
                 {data.transactions.some((t) => t.balance !== undefined) && (
-                  <th className="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 text-white uppercase">
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-cyan-300 uppercase">
                     Running Balance
                   </th>
                 )}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {data.transactions.map((transaction, index) => (
-                <tr
-                  key={`${index}-${transaction.description}`}
-                  className="hover:bg-gray-50"
-                >
-                  <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-900">
-                    {formatDate(transaction.date)}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {transaction.description}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+            <tbody>
+              {data.transactions.map((t, i) => (
+                <tr key={`${i}-${t.description}`} className="hover:bg-white/5">
+                  <td className="px-6 py-4 text-sm">{formatDate(t.date)}</td>
+                  <td className="px-6 py-4 text-sm">{t.description}</td>
+                  <td className="px-6 py-4 text-sm">
                     <span
-                      className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                        transaction.type === "credit"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+                      className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                        t.type === "credit"
+                          ? "bg-green-400/10 text-green-300"
+                          : "bg-red-400/10 text-red-300"
                       }`}
                     >
-                      {transaction.type === "credit" ? "Credit" : "Debit"}
+                      {t.type}
                     </span>
                   </td>
                   <td
-                    className={`px-6 py-4 text-right text-sm font-medium whitespace-nowrap ${
-                      transaction.type === "credit"
-                        ? "text-green-600"
-                        : "text-red-600"
+                    className={`px-6 py-4 text-right text-sm ${
+                      t.type === "credit" ? "text-green-300" : "text-red-300"
                     }`}
                   >
-                    {transaction.type === "credit" ? "+" : ""}
-                    {formatCurrency(transaction.amount)}
+                    {formatCurrency(t.amount)}
                   </td>
-                  {data.transactions.some((t) => t.balance !== undefined) && (
-                    <td className="px-6 py-4 text-right text-sm whitespace-nowrap text-gray-900">
-                      {transaction.balance !== undefined
-                        ? formatCurrency(transaction.balance)
-                        : "-"}
+                  {t.balance !== undefined && (
+                    <td className="px-6 py-4 text-right text-sm">
+                      {formatCurrency(t.balance)}
                     </td>
                   )}
                 </tr>
@@ -290,36 +223,6 @@ export default function BankStatementResults({
           </table>
         </div>
       </div>
-
-      {/* Validation Messages */}
-      {!data.isReconciled && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <div className="flex">
-            <svg
-              className="mt-0.5 mr-3 h-5 w-5 text-yellow-400"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path
-                fillRule="evenodd"
-                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            <div className="text-white">
-              <h4 className="text-sm font-medium text-yellow-800">
-                Balance Discrepancy Detected
-              </h4>
-              <p className="mt-1 text-sm text-yellow-700">
-                The calculated balance ({formatCurrency(data.calculatedBalance)}
-                ) does not match the ending balance (
-                {formatCurrency(data.endingBalance)}). Difference:{" "}
-                {formatCurrency(data.balanceDifference)}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
