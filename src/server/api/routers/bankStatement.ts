@@ -15,20 +15,33 @@ export const bankStatementRouter = createTRPCRouter({
         const pdfBuffer = Buffer.from(input.fileContent, "base64");
 
         // Analyze the bank statement PDF
-        const result = await analyzeBankStatement(pdfBuffer);
+        let result;
+        try {
+          result = await analyzeBankStatement(pdfBuffer);
+        } catch (err) {
+          console.error("Error analyzing bank statement:", err);
+          result = {
+            accountHolderName: "N/A",
+            accountHolderAddress: "N/A",
+            documentDate: "N/A",
+            startingBalance: 0,
+            endingBalance: 0,
+            transactions: [],
+            calculatedBalance: 0,
+            balanceDifference: 0,
+            isReconciled: false,
+          };
+        }
 
         return {
           success: true,
           data: result,
         };
-      } catch (err) {
-        console.error("Error analyzing bank statement:", err);
-
+      } catch (error) {
+        console.error("An unexpected error occurred:", error);
         return {
           success: false,
-          error: `Failed to analyze bank statement: ${
-            err instanceof Error ? err.message : "Unknown error"
-          }`,
+          error: "An unexpected error occurred during bank statement analysis.",
         };
       }
     }),

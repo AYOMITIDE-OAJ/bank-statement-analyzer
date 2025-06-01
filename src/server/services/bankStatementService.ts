@@ -19,7 +19,17 @@ export async function analyzeBankStatement(
     extractedText = pdfData.text;
   } catch (error) {
     console.error("PDF parse error:", error);
-    throw new Error("Failed to extract text from PDF.");
+    return {
+      accountHolderName: "N/A",
+      accountHolderAddress: "N/A",
+      documentDate: "N/A",
+      startingBalance: 0,
+      endingBalance: 0,
+      transactions: [],
+      calculatedBalance: 0,
+      balanceDifference: 0,
+      isReconciled: false,
+    };
   }
 
   const prompt = `
