@@ -1,10 +1,6 @@
 import PDFParse from "pdf-parse";
-import Anthropic from "@anthropic-ai/sdk";
+import { Anthropic } from "@anthropic-ai/sdk";
 import type { BankStatementData, Transaction } from "~/types/bank-statement";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
 
 export async function analyzeBankStatement(
   pdfBuffer: Buffer,
@@ -71,6 +67,10 @@ ${extractedText}
 `;
 
   try {
+    const anthropic = new Anthropic({
+      apiKey: process.env.ANTHROPIC_API_KEY ?? "",
+    });
+
     const completion = await anthropic.messages.create({
       model: "claude-3-opus-20240229",
       max_tokens: 4000,
@@ -86,20 +86,19 @@ ${extractedText}
       (block) => block.type === "text",
     ) as { type: "text"; text: string };
 
-    const jsonMatch = responseText.text.match(/\{[\s\S]*\}/);
+    const jsonMatch = /\{[\s\S]*\}/.exec(responseText.text);
     if (!jsonMatch) {
       throw new Error("Claude response does not contain valid JSON.");
     }
 
     let parsedData: BankStatementData;
     try {
-      parsedData = JSON.parse(jsonMatch[0]);
+      parsedData = JSON.parse(jsonMatch[0]) as BankStatementData;
     } catch (err) {
       console.error("JSON parsing failed:", err);
       throw new Error("Failed to parse JSON from Claude output.");
     }
 
-    // Post-processing
     const calculatedBalance = calculateBalanceFromTransactions(
       parsedData.startingBalance,
       parsedData.transactions,
@@ -122,7 +121,7 @@ ${extractedText}
   }
 }
 
-function calculateBalanceFromTransactions(
+export function calculateBalanceFromTransactions(
   startingBalance: number,
   transactions: Transaction[],
 ): number {

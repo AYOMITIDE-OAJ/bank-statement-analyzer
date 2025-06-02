@@ -1,7 +1,7 @@
 /** @type {import("next").NextConfig} */
 const config = {
   experimental: {
-    serverComponentsExternalPackages: ["pdf-parse"],
+    serverComponentsExternalPackages: ["pdf-parse", "@anthropic-ai/sdk"],
   },
 };
 

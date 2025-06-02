@@ -66,7 +66,7 @@ export default function BankStatementUpload({
 
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files || []);
+      const files = Array.from(e.target.files ?? []);
       if (files.length > 0 && files[0]) handleFileSelect(files[0]);
     },
     [handleFileSelect],
@@ -88,7 +88,7 @@ export default function BankStatementUpload({
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string;
-          const base64Content = result.split(",")[1] || "";
+          const base64Content = result.split(",")[1] ?? "";
           resolve(base64Content);
         };
         reader.onerror = reject;

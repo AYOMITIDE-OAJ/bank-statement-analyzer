@@ -12,16 +12,15 @@ export default function BankStatementResults({
   onReset,
 }: BankStatementResultsProps) {
   if (
-    !data ||
-    !data.accountHolderName ||
-    !data.accountHolderAddress ||
-    data.documentDate === undefined ||
-    data.startingBalance === undefined ||
-    data.endingBalance === undefined ||
-    !data.transactions ||
-    data.calculatedBalance === undefined ||
-    data.isReconciled === undefined ||
-    data.balanceDifference === undefined
+    !data?.accountHolderName ||
+    !data?.accountHolderAddress ||
+    data?.documentDate == null ||
+    data?.startingBalance == null ||
+    data?.endingBalance == null ||
+    !data?.transactions ||
+    data?.calculatedBalance == null ||
+    data?.isReconciled == null ||
+    data?.balanceDifference == null
   ) {
     return (
       <div className="mx-auto w-full max-w-6xl p-6 text-center">
