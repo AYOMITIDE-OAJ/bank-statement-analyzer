@@ -4,7 +4,8 @@
 
 [functions]
   node_bundler = "esbuild"
-  timeout = "30s"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Set function timeout through Netlify UI instead
